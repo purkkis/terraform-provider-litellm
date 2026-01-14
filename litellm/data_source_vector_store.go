@@ -83,7 +83,7 @@ func dataSourceLiteLLMVectorStoreRead(d *schema.ResourceData, m interface{}) err
 	}
 
 	var vectorStoreResp VectorStoreResponse
-	err = handleVectorStoreAPIResponse(resp, &vectorStoreResp)
+	err = handleVectorStoreAPIResponse(resp, &vectorStoreResp, client)
 	if err != nil {
 		if err.Error() == "vector_store_not_found" {
 			return fmt.Errorf("vector store '%s' not found", vectorStoreID)

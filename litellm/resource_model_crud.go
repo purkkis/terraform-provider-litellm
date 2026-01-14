@@ -252,7 +252,7 @@ func createOrUpdateModel(d *schema.ResourceData, m interface{}, isUpdate bool) e
 	}
 	defer resp.Body.Close()
 
-	_, err = handleAPIResponse(resp, modelReq)
+	_, err = handleAPIResponse(resp, modelReq, client)
 	if err != nil {
 		if isUpdate && err.Error() == "model_not_found" {
 			return createOrUpdateModel(d, m, false)
@@ -283,7 +283,7 @@ func resourceLiteLLMModelRead(d *schema.ResourceData, m interface{}) error {
 	}
 	defer resp.Body.Close()
 
-	modelResp, err := handleAPIResponse(resp, nil)
+	modelResp, err := handleAPIResponse(resp, nil, client)
 	if err != nil {
 		if err.Error() == "model_not_found" {
 			d.SetId("")
@@ -383,7 +383,7 @@ func resourceLiteLLMModelDelete(d *schema.ResourceData, m interface{}) error {
 	}
 	defer resp.Body.Close()
 
-	_, err = handleAPIResponse(resp, deleteReq)
+	_, err = handleAPIResponse(resp, deleteReq, client)
 	if err != nil {
 		if err.Error() == "model_not_found" {
 			d.SetId("")

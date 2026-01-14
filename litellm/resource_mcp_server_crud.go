@@ -183,7 +183,7 @@ func resourceLiteLLMMCPServerCreate(d *schema.ResourceData, m interface{}) error
 	defer resp.Body.Close()
 
 	var mcpResp MCPServerResponse
-	if err := handleMCPAPIResponse(resp, &mcpResp); err != nil {
+	if err := handleMCPAPIResponse(resp, &mcpResp, client); err != nil {
 		return fmt.Errorf("failed to create MCP server: %w", err)
 	}
 
@@ -214,7 +214,7 @@ func resourceLiteLLMMCPServerRead(d *schema.ResourceData, m interface{}) error {
 	defer resp.Body.Close()
 
 	var mcpResp MCPServerResponse
-	if err := handleMCPAPIResponse(resp, &mcpResp); err != nil {
+	if err := handleMCPAPIResponse(resp, &mcpResp, client); err != nil {
 		if err.Error() == "mcp_server_not_found" {
 			d.SetId("")
 			return nil
@@ -246,7 +246,7 @@ func resourceLiteLLMMCPServerUpdate(d *schema.ResourceData, m interface{}) error
 	defer resp.Body.Close()
 
 	var mcpResp MCPServerResponse
-	if err := handleMCPAPIResponse(resp, &mcpResp); err != nil {
+	if err := handleMCPAPIResponse(resp, &mcpResp, client); err != nil {
 		return fmt.Errorf("failed to update MCP server: %w", err)
 	}
 

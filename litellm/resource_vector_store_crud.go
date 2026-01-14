@@ -44,7 +44,7 @@ func resourceLiteLLMVectorStoreCreate(d *schema.ResourceData, m interface{}) err
 	}
 	defer resp.Body.Close()
 
-	err = handleVectorStoreAPIResponse(resp, nil)
+	err = handleVectorStoreAPIResponse(resp, nil, client)
 	if err != nil {
 		return fmt.Errorf("failed to create vector store: %w", err)
 	}
@@ -77,7 +77,7 @@ func resourceLiteLLMVectorStoreRead(d *schema.ResourceData, m interface{}) error
 	}
 
 	var vectorStoreResp VectorStoreResponse
-	err = handleVectorStoreAPIResponse(resp, &vectorStoreResp)
+	err = handleVectorStoreAPIResponse(resp, &vectorStoreResp, client)
 	if err != nil {
 		if err.Error() == "vector_store_not_found" {
 			d.SetId("")
@@ -133,7 +133,7 @@ func resourceLiteLLMVectorStoreUpdate(d *schema.ResourceData, m interface{}) err
 	}
 	defer resp.Body.Close()
 
-	err = handleVectorStoreAPIResponse(resp, nil)
+	err = handleVectorStoreAPIResponse(resp, nil, client)
 	if err != nil {
 		return fmt.Errorf("failed to update vector store: %w", err)
 	}
@@ -155,7 +155,7 @@ func resourceLiteLLMVectorStoreDelete(d *schema.ResourceData, m interface{}) err
 	}
 	defer resp.Body.Close()
 
-	err = handleVectorStoreAPIResponse(resp, nil)
+	err = handleVectorStoreAPIResponse(resp, nil, client)
 	if err != nil {
 		if err.Error() == "vector_store_not_found" {
 			d.SetId("")
