@@ -40,7 +40,7 @@ func resourceLiteLLMCredentialCreate(d *schema.ResourceData, m interface{}) erro
 	}
 	defer resp.Body.Close()
 
-	err = handleCredentialAPIResponse(resp, nil)
+	err = handleCredentialAPIResponse(resp, nil, client)
 	if err != nil {
 		return fmt.Errorf("failed to create credential: %w", err)
 	}
@@ -74,7 +74,7 @@ func resourceLiteLLMCredentialRead(d *schema.ResourceData, m interface{}) error 
 	}
 
 	var credentialResp CredentialResponse
-	err = handleCredentialAPIResponse(resp, &credentialResp)
+	err = handleCredentialAPIResponse(resp, &credentialResp, client)
 	if err != nil {
 		if err.Error() == "credential_not_found" {
 			d.SetId("")
@@ -123,7 +123,7 @@ func resourceLiteLLMCredentialUpdate(d *schema.ResourceData, m interface{}) erro
 	}
 	defer resp.Body.Close()
 
-	err = handleCredentialAPIResponse(resp, nil)
+	err = handleCredentialAPIResponse(resp, nil, client)
 	if err != nil {
 		return fmt.Errorf("failed to update credential: %w", err)
 	}
@@ -142,7 +142,7 @@ func resourceLiteLLMCredentialDelete(d *schema.ResourceData, m interface{}) erro
 	}
 	defer resp.Body.Close()
 
-	err = handleCredentialAPIResponse(resp, nil)
+	err = handleCredentialAPIResponse(resp, nil, client)
 	if err != nil {
 		if err.Error() == "credential_not_found" {
 			d.SetId("")

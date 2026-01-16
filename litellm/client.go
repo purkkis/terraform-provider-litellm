@@ -8,24 +8,38 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
 type Client struct {
-	APIBase    string
-	APIKey     string
-	httpClient *http.Client
+	APIBase            string
+	APIKey             string
+	httpClient         *http.Client
+	InsecureSkipVerify bool
 }
 
-func NewClient(apiBase, apiKey string) *Client {
+func NewClient(apiBase, apiKey string, insecureSkipVerify bool) *Client {
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
 	}
 
 	return &Client{
-		APIBase:    apiBase,
-		APIKey:     apiKey,
-		httpClient: &http.Client{Transport: tr},
+		APIBase:            apiBase,
+		APIKey:             apiKey,
+		httpClient:         &http.Client{Transport: tr},
+		InsecureSkipVerify: insecureSkipVerify,
 	}
+}
+
+// validateUUID checks if the provided string is a valid UUID format
+func (c *Client) validateUUID(id string) error {
+	if err := uuid.Validate(id); err != nil {
+		return fmt.Errorf("invalid UUID format: %v", err)
+	}
+	return nil
 }
 
 // Team-related methods
@@ -34,6 +48,9 @@ func (c *Client) CreateTeam(team map[string]interface{}) (map[string]interface{}
 }
 
 func (c *Client) GetTeam(teamID string) (map[string]interface{}, error) {
+	if err := c.validateUUID(teamID); err != nil {
+		return nil, err
+	}
 	return c.sendRequest("GET", fmt.Sprintf("/team/info?team_id=%s", teamID), nil)
 }
 
@@ -282,7 +299,7 @@ func (c *Client) sendRequest(method, path string, body interface{}) (map[string]
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling request body: %v", err)
 		}
-		log.Printf("Making %s request to %s with body:\n%s", method, url, string(jsonBody))
+		log.Printf("Making %s request to %s with body:\n%s", method, url, c.redactSensitiveData(string(jsonBody)))
 		req, err = http.NewRequest(method, url, bytes.NewBuffer(jsonBody))
 	} else {
 		log.Printf("Making %s request to %s", method, url)
@@ -309,7 +326,7 @@ func (c *Client) sendRequest(method, path string, body interface{}) (map[string]
 	}
 
 	log.Printf("Response status: %d", resp.StatusCode)
-	log.Printf("Response body: %s", string(bodyBytes))
+	log.Printf("Response body: %s", c.redactSensitiveData(string(bodyBytes)))
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API request failed with status code %d: %s", resp.StatusCode, string(bodyBytes))
@@ -324,4 +341,34 @@ func (c *Client) sendRequest(method, path string, body interface{}) (map[string]
 	}
 
 	return result, nil
+}
+
+// redactSensitiveData masks sensitive information in logs
+func (c *Client) redactSensitiveData(data string) string {
+	// List of sensitive field patterns to redact
+	sensitivePatterns := []string{
+		`"(api_key|key|token|password|secret|credential|auth)":\s*"[^"]*"`,
+		`"(model_api_key|aws_access_key_id|aws_secret_access_key|vertex_credentials)":\s*"[^"]*"`,
+		`"(x-api-key)":\s*"[^"]*"`,
+		`"(credential_values)":\s*\{[^}]*\}`,
+	}
+
+	result := data
+	for _, pattern := range sensitivePatterns {
+		re := regexp.MustCompile(pattern)
+		result = re.ReplaceAllStringFunc(result, func(match string) string {
+			// Extract the field name and replace the value with [REDACTED]
+			parts := strings.SplitN(match, ":", 2)
+			if len(parts) == 2 {
+				fieldPart := parts[0]
+				if strings.Contains(parts[1], "{") {
+					return fieldPart + `: {"[REDACTED]"}`
+				}
+				return fieldPart + `: "[REDACTED]"`
+			}
+			return "[REDACTED]"
+		})
+	}
+
+	return result
 }

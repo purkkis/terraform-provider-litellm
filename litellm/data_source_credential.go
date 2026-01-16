@@ -55,7 +55,7 @@ func dataSourceLiteLLMCredentialRead(d *schema.ResourceData, m interface{}) erro
 	}
 
 	var credentialResp CredentialResponse
-	err = handleCredentialAPIResponse(resp, &credentialResp)
+	err = handleCredentialAPIResponse(resp, &credentialResp, client)
 	if err != nil {
 		if err.Error() == "credential_not_found" {
 			return fmt.Errorf("credential '%s' not found", credentialName)

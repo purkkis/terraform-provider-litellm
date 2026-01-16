@@ -34,7 +34,7 @@ func isModelNotFoundError(errResp ErrorResponse) bool {
 	return false
 }
 
-func handleAPIResponse(resp *http.Response, reqBody interface{}) (*ModelResponse, error) {
+func handleAPIResponse(resp *http.Response, reqBody interface{}, client *Client) (*ModelResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %v", err)
@@ -49,7 +49,7 @@ func handleAPIResponse(resp *http.Response, reqBody interface{}) (*ModelResponse
 		}
 		reqBodyBytes, _ := json.Marshal(reqBody)
 		return nil, fmt.Errorf("API request failed: Status: %s, Response: %s, Request: %s",
-			resp.Status, string(bodyBytes), string(reqBodyBytes))
+			resp.Status, client.redactSensitiveData(string(bodyBytes)), client.redactSensitiveData(string(reqBodyBytes)))
 	}
 
 	var modelResp ModelResponse
@@ -112,7 +112,7 @@ func GetBoolValue(apiValue, defaultValue bool) bool {
 }
 
 // handleMCPAPIResponse handles API responses specifically for MCP server operations
-func handleMCPAPIResponse(resp *http.Response, result interface{}) error {
+func handleMCPAPIResponse(resp *http.Response, result interface{}, client *Client) error {
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %v", err)
@@ -126,7 +126,7 @@ func handleMCPAPIResponse(resp *http.Response, result interface{}) error {
 			}
 		}
 		return fmt.Errorf("API request failed: Status: %s, Response: %s",
-			resp.Status, string(bodyBytes))
+			resp.Status, client.redactSensitiveData(string(bodyBytes)))
 	}
 
 	if err := json.Unmarshal(bodyBytes, result); err != nil {
@@ -189,7 +189,7 @@ func isCredentialNotFoundError(errResp ErrorResponse) bool {
 }
 
 // handleCredentialAPIResponse handles API responses specifically for credential operations
-func handleCredentialAPIResponse(resp *http.Response, result interface{}) error {
+func handleCredentialAPIResponse(resp *http.Response, result interface{}, client *Client) error {
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %v", err)
@@ -207,7 +207,7 @@ func handleCredentialAPIResponse(resp *http.Response, result interface{}) error 
 			}
 		}
 		return fmt.Errorf("API request failed: Status: %s, Response: %s",
-			resp.Status, string(bodyBytes))
+			resp.Status, client.redactSensitiveData(string(bodyBytes)))
 	}
 
 	// For credential operations, we might get a simple string response or a credential object
@@ -248,7 +248,7 @@ func isVectorStoreNotFoundError(errResp ErrorResponse) bool {
 }
 
 // handleVectorStoreAPIResponse handles API responses specifically for vector store operations
-func handleVectorStoreAPIResponse(resp *http.Response, result interface{}) error {
+func handleVectorStoreAPIResponse(resp *http.Response, result interface{}, client *Client) error {
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %v", err)
@@ -266,7 +266,7 @@ func handleVectorStoreAPIResponse(resp *http.Response, result interface{}) error
 			}
 		}
 		return fmt.Errorf("API request failed: Status: %s, Response: %s",
-			resp.Status, string(bodyBytes))
+			resp.Status, client.redactSensitiveData(string(bodyBytes)))
 	}
 
 	if result != nil {
